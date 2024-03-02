@@ -105,7 +105,7 @@ void display_recomend(int freq_dict[], int alph_freq[], char* enc_str, int strle
 
     printf("Recomended changes: \n");
     for (int i = 1; i < positive_values; i++) {
-        printf("%c - %c\n", 'À'+max_n(arr_sorted, arr_ind, i), 'À'+max_n(alph_arr_sorted, alph_arr_ind, i));
+        printf("%c - %c\n", 'À'+max_n(arr_sorted, arr_ind, i), 'à'+max_n(alph_arr_sorted, alph_arr_ind, i));
     }
 }
 
