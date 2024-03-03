@@ -129,6 +129,14 @@ int fill_dict(char* str, int freq_dict[]) {
     return sym_amt;
 }
 
+void show_encoded_string(char *str) {
+    printf("Encrypted string: \n\n");
+    for (int i = 0; str[i] != '\0'; i++) {
+        printf("%c", str[i]);
+    }
+    printf("\n\n");
+}
+
 int main(void) {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251); // alph À(64) > ÿ(-1)
@@ -136,46 +144,56 @@ int main(void) {
     int freq_dict[ALPHLEN] = { 0 }; // À Á Â ... = i+64 (¨ = -88 = i=32)
     int alph_freq[ALPHLEN] = {31,13,25,15,21,32,9,14,30,11,23,24,\
                             22,29,33,20,26,27,28,19,3,10,6,12,\
-                            8,5,2,17,16,4,7,18,1}; // alphabet letters frequency
+                            8,5,2,17,16,4,7,18,1}; // alphabet letters frequency ranking
     int* history = (int*)malloc(MINHISTSTEP * sizeof(int));
-    char enc_str[MAXSTRLEN] = { 0 };
+    // char enc_str[MAXSTRLEN] = { 0 };
 
-    FILE* input_file = fopen("input.txt", "r");
-    if (input_file == NULL) {
-        return 1;
-    }
-
-    fgets(enc_str, MAXSTRLEN, input_file);
+    // FILE* input_file = fopen("input.txt", "r");
+    // if (input_file == NULL) {
+    //     return 1;
+    // }
+    // fgets(enc_str, MAXSTRLEN, input_file);
+    char enc_str[MAXSTRLEN] = "ÇÀÊÎÄÈÐÎÂÀÍÍÀßÑÒÐÎÊÀ";
 
     int sym_amt = fill_dict(enc_str, freq_dict);
 
     while (1) {
+        show_encoded_string(enc_str);
+        printf("Please, choose 1 option:\n\
+        1. Frequency analysis\n\
+        2. Group words by letters amount\n\
+        3. Group words by uppercase letters left\n\
+        4. Change letters in encrypted string\n\
+        5. Revert action by id (show history)\n\
+        'e'. Enter 'e' to exit the programm\n\
+        >>> ");
         int user_option = getchar();
-        switch (user_option)
-        {
-        case '1':
-            //TODO freq analysis
-            display_arr(freq_dict, sym_amt);
-            printf("\n");
-            display_recomend(freq_dict, alph_freq, enc_str, strlen(enc_str));
-            break;
-        case '2':
-            //TODO words by letters_amt
-            break;
-        case '3':
-            //TODO words by uppercase letters
-            break;
-        case '4':
-            //TODO change letters 'À' - 'á'  
-            break;
-        case '5':
-            //TODO revert action by id
-            break;
-        case 'e':
-            printf("exit");
-            return 0;
-        default:
-            break;
+        fflush(stdin);
+        switch (user_option) {
+            case '1':
+                //TODO freq analysis
+                display_arr(freq_dict, sym_amt);
+                printf("\n");
+                display_recomend(freq_dict, alph_freq, enc_str, strlen(enc_str));
+                break;
+            case '2':
+                //TODO words by letters_amt
+                break;
+            case '3':
+                //TODO words by uppercase letters
+                break;
+            case '4':
+                //TODO change letters 'À' - 'á'  
+                break;
+            case '5':
+                //TODO revert action by id
+                break;
+            case 'e':
+                printf("Shutting down...");
+                return 0;
+            default:
+                printf("Error input detected!");
+                break;
         }
     }
 }
