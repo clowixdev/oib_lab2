@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <stdbool.h>
 
 // -
 
@@ -15,11 +16,11 @@ void display_int(int arr[]) {
     printf("\n");
 }
 
-void display_str(char* arr) {
-    for (int i = 0; i < 33; i++) {
-        printf("%c ", arr[i]);
+void display_str(char* arr, int len) {
+    for (int i = 0; i < len; i++) {
+        printf("%c", arr[i]);
     }
-    printf("\n");
+    printf(" ");
 }
 
 void copy(int arr1[], int arr2[]) {
@@ -30,7 +31,7 @@ void copy(int arr1[], int arr2[]) {
 
 void clear(char* str, int strlen) {
     for (int i = 0; i < strlen; i++) {
-        str[i] = 0;
+        str[i] = '\0';
     }
 }
 
@@ -112,7 +113,7 @@ void display_recomend(int freq_dict[], int alph_freq[], char* enc_str, int strle
 int fill_dict(char* str, int freq_dict[]) {
     int sym_amt = 0;
     for (int i = 0; str[i] != '\0'; i++) {
-        if (str[i] == ' ') {
+        if (str[i] == ' ' || str[i] == '\n') {
             continue;
         } else {
             if (str[i] == '╗') {
@@ -137,6 +138,48 @@ void show_encoded_string(char *str) {
     printf("\n\n");
 }
 
+// йыпмяиьыудр пасржотчямш ьи эика мяиярмярнамдылы иьифрки яадмяи ьы яыфеды амфр ыь пымяияыньы пфрььхц
+int count_words(char* str) {
+    int count = 0;
+    for(int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == ' ') {
+            count++;
+        }
+    }
+    count++; //last word
+    return count;
+}
+
+int def_max_len(char* str) {
+    int curr_len = 0;
+    int max_len = 0;
+    for(int i = 0; str[i] != '\0'; i++) {
+        if (str[i] != ' ') {
+            curr_len++;
+        } else {
+            max_len = (curr_len > max_len) ? curr_len : max_len;
+            curr_len = 0;
+        }
+    }
+
+    return max_len;
+}
+
+void get_n_word(char* str, int n, char* word) {
+    int count_whitespace = 0;
+    int j = 0;
+    for(int i = 0; count_whitespace != n; i++) {
+        if (str[i] == ' ') {
+            count_whitespace++;
+            i++;
+        }
+        if (count_whitespace == n-1) {
+            word[j++] = str[i];
+        }
+    }
+    word[j] = '\0';
+}
+
 int main(void) {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251); // alph ю(64) > Ъ(-1)
@@ -153,11 +196,22 @@ int main(void) {
     //     return 1;
     // }
     // fgets(enc_str, MAXSTRLEN, input_file);
-    char enc_str[MAXSTRLEN] = "гюйндхпнбюммюъярпнйю";
+    char enc_str[MAXSTRLEN] = "оепбши брнпни рперхи вербепрши оърши ьеярни\0";
+    int words_amt = count_words(enc_str);
+    int max_word_len = def_max_len(enc_str);
+
+    char **words = (char**) malloc(words_amt * max_word_len * sizeof(char));
+    for (int i = 0; i < words_amt; i++) {
+        char *word = (char*) malloc(sizeof(char) * max_word_len);
+        clear(word, max_word_len);
+        get_n_word(enc_str, i+1, word);
+        words[i] = word;
+    }
 
     int sym_amt = fill_dict(enc_str, freq_dict);
 
     while (1) {
+        printf("\n");
         show_encoded_string(enc_str);
         printf("Please, choose 1 option:\n\
         1. Frequency analysis\n\
@@ -178,12 +232,33 @@ int main(void) {
                 break;
             case '2':
                 //TODO words by letters_amt
+
+                bool is_printed = false;
+
+                printf("Words with len\n");
+                for (int i = max_word_len; i != 1; i--) {
+                    for (int j = 0; j != words_amt; j++) {
+                        if (strlen(words[j]) != i) {
+                            continue;
+                        } else {
+                            if (is_printed == false) {
+                                if (i != max_word_len) {
+                                    printf("\n");
+                                }
+                                printf("\t%d: ", i);
+                                is_printed = true;
+                            }
+                            display_str(words[j], i);
+                        }
+                    }
+                    is_printed = false;
+                }
                 break;
             case '3':
                 //TODO words by uppercase letters
                 break;
             case '4':
-                //TODO change letters 'ю' - 'А'  
+                //TODO change letters 'A' - 'o'  
                 break;
             case '5':
                 //TODO revert action by id
