@@ -9,8 +9,8 @@
 #define MINHISTSTEP 1
 #define ALPHLEN 33
 
-void display_int(int arr[]) {
-    for (int i = 0; i < 33; i++) {
+void display_int(int arr[], int len) {
+    for (int i = 0; i < len; i++) {
         printf("%d ", arr[i]);
     }
     printf("\n");
@@ -38,9 +38,13 @@ void clear(char* str, int strlen) {
 void display_arr(int arr[], int sym_amt) {
     printf("Total amount of letters: %d\n", sym_amt);
     for (int i = 0; i < 32; i++) {
-        printf("%d) %c - %d - %.3f\n", i, 'ю'+i, arr[i], (float)arr[i]/(sym_amt));
+        if (arr[i] != 0) {
+            printf("%d) %c - %d - %.3f\n", i, 'ю'+i, arr[i], (float)arr[i]/(sym_amt));
+        }
     }
-    printf("32) ╗ - %d - %.3f", arr[32], (float)arr[32]/(sym_amt));
+    if (arr[32] != 0) {
+        printf("32) ╗ - %d - %.3f", arr[32], (float)arr[32]/(sym_amt));
+    }
 }
 
 void sort(int *arr, int size) {
@@ -111,23 +115,23 @@ void display_recomend(int freq_dict[], int alph_freq[], char* enc_str, int strle
 }
 
 int fill_dict(char* str, int freq_dict[]) {
-    int sym_amt = 0;
+    int symbols = 0;
     for (int i = 0; str[i] != '\0'; i++) {
         if (str[i] == ' ' || str[i] == '\n') {
             continue;
         } else {
             if (str[i] == '╗') {
                 freq_dict[ALPHLEN-1]++;
-                sym_amt++;
+                symbols++;
                 continue;
             } else {
                 freq_dict[str[i] + 64]++;
-                sym_amt++;
+                symbols++;
             }
         }
     }
 
-    return sym_amt;
+    return symbols;
 }
 
 void show_encoded_string(char *str) {
@@ -180,9 +184,27 @@ void get_n_word(char* str, int n, char* word) {
     word[j] = '\0';
 }
 
+int upper_amt(char* str) {
+    int amt = 0;
+
+    for(int i = 0; str[i] != '\0'; i++) {
+        if (((str[i] >= -64 && str[i] <= -32) || str[i] == -88) && str[i] != ' ') {
+            amt++;
+        }
+    }
+
+    return amt;
+}
+
+void wait_accept() {
+    printf("\ntype anything to continue >>> ");
+    getchar();
+    fflush(stdin);
+}
+
 int main(void) {
     SetConsoleCP(1251);
-    SetConsoleOutputCP(1251); // alph ю(64) > Ъ(-1)
+    SetConsoleOutputCP(1251); // alph ю(-64) > Ъ(-1)
 
     int freq_dict[ALPHLEN] = { 0 }; // ю а б ... = i+64 (╗ = -88 = i=32)
     int alph_freq[ALPHLEN] = {31,13,25,15,21,32,9,14,30,11,23,24,\
@@ -196,9 +218,12 @@ int main(void) {
     //     return 1;
     // }
     // fgets(enc_str, MAXSTRLEN, input_file);
-    char enc_str[MAXSTRLEN] = "оепбши брнпни рперхи вербепрши оърши ьеярни\0";
+    char enc_str[MAXSTRLEN] = "оЕПБШИ брНПНИ рпеРХИ вербЕПРШИ оърши ьеярни\0";
+
+    int sym_amt = fill_dict(enc_str, freq_dict);
+
     int words_amt = count_words(enc_str);
-    int max_word_len = def_max_len(enc_str);
+    int max_word_len = def_max_len(enc_str) + 1;
 
     char **words = (char**) malloc(words_amt * max_word_len * sizeof(char));
     for (int i = 0; i < words_amt; i++) {
@@ -207,8 +232,6 @@ int main(void) {
         get_n_word(enc_str, i+1, word);
         words[i] = word;
     }
-
-    int sym_amt = fill_dict(enc_str, freq_dict);
 
     while (1) {
         printf("\n");
@@ -229,36 +252,66 @@ int main(void) {
                 display_arr(freq_dict, sym_amt);
                 printf("\n");
                 display_recomend(freq_dict, alph_freq, enc_str, strlen(enc_str));
+
+                wait_accept();
                 break;
             case '2':
                 //TODO words by letters_amt
 
-                bool is_printed = false;
+                bool is_printed_len = false;
 
-                printf("Words with len\n");
+                printf("Words with len");
                 for (int i = max_word_len; i != 1; i--) {
                     for (int j = 0; j != words_amt; j++) {
                         if (strlen(words[j]) != i) {
                             continue;
                         } else {
-                            if (is_printed == false) {
+                            if (is_printed_len == false) {
                                 if (i != max_word_len) {
                                     printf("\n");
                                 }
-                                printf("\t%d: ", i);
-                                is_printed = true;
+                                printf("\t%d symbols: ", i);
+                                is_printed_len = true;
                             }
-                            display_str(words[j], i);
+                            printf("%s ", words[j]);
                         }
                     }
-                    is_printed = false;
+                    is_printed_len = false;
                 }
+                wait_accept();
                 break;
             case '3':
                 //TODO words by uppercase letters
+
+                bool is_printed_upper = false;
+
+                for (int i = 0; i < words_amt; i++) {
+                    clear(words[i], max_word_len);
+                    get_n_word(enc_str, i+1, words[i]);
+                }
+
+                printf("Words with encoded letters:");
+                for (int i = max_word_len; i != 1; i--) {
+                    for (int j = 0; j < words_amt; j++) {
+                        if (upper_amt(words[j]) != i) {
+                            continue;
+                        } else {
+                            if (is_printed_upper == false) {
+                                if (i != max_word_len) {
+                                    printf("\n");
+                                }
+                                printf("\t%d symbols: ", i);
+                                is_printed_upper = true;
+                            }
+                            printf("%s ", words[j]);
+                        }
+                    }
+                    is_printed_upper = false;
+                }
+                wait_accept();
                 break;
             case '4':
-                //TODO change letters 'A' - 'o'  
+                //TODO change letters 'A' - 'o'
                 break;
             case '5':
                 //TODO revert action by id
