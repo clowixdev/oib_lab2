@@ -6,7 +6,7 @@
 // -
 
 #define MAXSTRLEN 200
-#define MINHISTSTEP 1
+#define HISTLEN 33
 #define ALPHLEN 33
 
 void display_int(int arr[], int len) {
@@ -196,6 +196,51 @@ int upper_amt(char* str) {
     return amt;
 }
 
+int change_letter(char* enc_str, char enc_letter, char dec_letter) {
+    for (int i = 0; enc_str[i] != 0; i++) {
+        if (enc_str[i] == enc_letter) {
+            enc_str[i] = dec_letter;
+        }
+    }
+
+    return 0;
+}
+
+void history_add(int history[], char enc_letter, char dec_letter) {
+    int action = 0;
+    int enc_code = -1 * (int)enc_letter;
+    int dec_code = -1 * (int)dec_letter;
+    action = enc_code * 100 + dec_code;
+
+    int i;
+    for(i = 0; i < HISTLEN; i++) {
+        if (history[i] == 0) {
+            break;
+        }
+    }
+    history[i] = action;
+}
+
+void show_history(int history[]) {
+    printf("History: \n");
+    for (int i = 0; history[i] != 0; i++) {
+        printf("%d) %c -> %c\n", i, -1 * (history[i]/100), -1 * (history[i]%100));
+    }
+}
+
+void history_del(int history[], int action_id) {
+    int i;
+    if (action_id == 32) {
+        history[32] = 0;
+        return;
+    }
+    history[action_id] = 0;
+    for(i = action_id; history[i+1] != 0; i++) {
+        history[i] = history[i+1];
+    }
+    history[i] = 0;
+}
+
 void wait_accept() {
     printf("\ntype anything to continue >>> ");
     getchar();
@@ -206,11 +251,11 @@ int main(void) {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251); // alph À(-64) > ÿ(-1)
 
-    int freq_dict[ALPHLEN] = { 0 }; // À Á Â ... = i+64 (¨ = -88 = i=32)
+    int freq_dict[ALPHLEN] = { 0 }; // À Á Â ... = i+64 (¨ = -88 = i=32, ¸ = -72)
     int alph_freq[ALPHLEN] = {31,13,25,15,21,32,9,14,30,11,23,24,\
                             22,29,33,20,26,27,28,19,3,10,6,12,\
                             8,5,2,17,16,4,7,18,1}; // alphabet letters frequency ranking
-    int* history = (int*)malloc(MINHISTSTEP * sizeof(int));
+    int history[HISTLEN] = { 0 };
     // char enc_str[MAXSTRLEN] = { 0 };
 
     // FILE* input_file = fopen("input.txt", "r");
@@ -218,7 +263,7 @@ int main(void) {
     //     return 1;
     // }
     // fgets(enc_str, MAXSTRLEN, input_file);
-    char enc_str[MAXSTRLEN] = "Ïåðâûé ÂÒîðîé ÒÐÅòèé ×ÅÒÂåðòûé ÏßÒÛÉ ØÅÑÒÎÉ\0";
+    char enc_str[MAXSTRLEN] = "ÏÅÐÂÛÉ ÂÒÎÐÎÉ ÒÐÅÒÈÉ ×ÅÒÂÅÐÒÛÉ ÏßÒÛÉ ØÅÑÒÎÉ\0";
 
     int sym_amt = fill_dict(enc_str, freq_dict);
 
@@ -312,9 +357,41 @@ int main(void) {
                 break;
             case '4':
                 //TODO change letters 'A' - 'o'
+                printf("Encrypted letter >>> ");
+                char enc_letter = getchar();
+                fflush(stdin);
+
+                printf("Decrypted letter >>> ");
+                char dec_letter = getchar();
+                fflush(stdin);
+
+                if (change_letter(enc_str, enc_letter, dec_letter) == -1) {
+                    printf("Wrong encrypted/decrypted letter!");
+                } else {
+                    history_add(history, enc_letter, dec_letter);
+                }
+
                 break;
             case '5':
                 //TODO revert action by id
+                show_history(history);
+                if (history[0] == 0) {
+                    printf("Empty :(");
+                    break;
+                }
+
+                printf("What action you want to revert? (enter \"id)\" or \"b\" to back) >>> ");
+                int action_id = getchar() - '0';
+                fflush(stdin);
+
+                if (action_id == 'b' - '0') { //! b == 98
+                    break;
+                }
+
+                change_letter(enc_str, (char)(-1 * (history[action_id]%100)), (char)(-1 * (history[action_id]/100)));
+                history_del(history, action_id);
+
+                wait_accept();
                 break;
             case 'e':
                 printf("Shutting down...");
