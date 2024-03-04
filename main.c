@@ -89,27 +89,51 @@ int str_set(char* str, char* set, int str_len) {
 
 void display_recomend(int freq_dict[], int alph_freq[], char* enc_str, int strlen) {
 
+    printf("Recomended changes: ");
+    int set_upper[ALPHLEN] = { 0 };
+    int set_lower[ALPHLEN] = { 0 };
+
+    for (int i = 0; enc_str[i] != '\0'; i++) {
+        if ((enc_str[i] >= -64 && enc_str[i] <= -32) && enc_str[i] != ' ') { //is_uppercase
+            set_upper[enc_str[i] + 64]++;
+        } else if (enc_str[i] == -88) { //is_upper_YO
+            set_upper[32]++;
+        } else if ((enc_str[i] >= -31 && enc_str[i] <= -1) && enc_str[i] != ' ') { //is_lowercase
+            set_lower[enc_str[i] + 32]++;
+        } else if (enc_str[i] == -72) { //is_lower_yo
+            set_lower[32]++;
+        }
+    }
+
+    for(int i = 0; i < 33; i++) {
+        if (set_lower[i] == 0) {
+            set_lower[i] = alph_freq[i];
+        } else {
+            set_lower[i] = 0;
+        }
+    }
+
     int arr_sorted[ALPHLEN] = { 0 };
-    copy(freq_dict, arr_sorted);
+    copy(set_upper, arr_sorted);
     sort(arr_sorted, ALPHLEN);
     int arr_ind[ALPHLEN] = { 0 };
-    copy(freq_dict, arr_ind);
+    copy(set_upper, arr_ind);
 
     int alph_arr_sorted[ALPHLEN] = { 0 };
-    copy(alph_freq, alph_arr_sorted);
+    copy(set_lower, alph_arr_sorted);
     sort(alph_arr_sorted, ALPHLEN);
     int alph_arr_ind[ALPHLEN] = { 0 };
-    copy(alph_freq, alph_arr_ind);
+    copy(set_lower, alph_arr_ind);
 
-    int positive_values = 0;
+    int encrypted_amt = 0;
     for (int i = 0; i < ALPHLEN; i++) {
-        if (freq_dict[i] != 0) {
-            positive_values++;
+        if (set_upper[i] != 0) {
+            encrypted_amt++;
         }
     }
 
     printf("Recomended changes: \n");
-    for (int i = 1; i < positive_values; i++) {
+    for (int i = 1; i < encrypted_amt; i++) {
         printf("%c - %c\n", 'À'+max_n(arr_sorted, arr_ind, i), 'à'+max_n(alph_arr_sorted, alph_arr_ind, i));
     }
 }
@@ -294,10 +318,21 @@ int main(void) {
         switch (user_option) {
             case '1':
                 //TODO freq analysis
-                display_arr(freq_dict, sym_amt);
-                printf("\n");
-                display_recomend(freq_dict, alph_freq, enc_str, strlen(enc_str));
+                printf("What do you want to see: \n\t1.Frequency dictionary\n\t2.Recomended changed\n\t>>> ");
+                char user_input = getchar();
+                fflush(stdin);
 
+                switch (user_input) {
+                    case '1':
+                        display_arr(freq_dict, sym_amt);
+                        break;
+                    case '2':
+                        display_recomend(freq_dict, alph_freq, enc_str, strlen(enc_str));
+                        break;
+                    default:
+                        printf("Incorrect option");
+                        break;
+                }
                 wait_accept();
                 break;
             case '2':
@@ -331,7 +366,6 @@ int main(void) {
                 bool is_printed_upper = false;
 
                 for (int i = 0; i < words_amt; i++) {
-                    clear(words[i], max_word_len);
                     get_n_word(enc_str, i+1, words[i]);
                 }
 
@@ -368,6 +402,9 @@ int main(void) {
                 if (change_letter(enc_str, enc_letter, dec_letter) == -1) {
                     printf("Wrong encrypted/decrypted letter!");
                 } else {
+                    for (int i = 0; i < words_amt; i++) {
+                        get_n_word(enc_str, i+1, words[i]);
+                    }
                     history_add(history, enc_letter, dec_letter);
                 }
 
@@ -390,6 +427,10 @@ int main(void) {
 
                 change_letter(enc_str, (char)(-1 * (history[action_id]%100)), (char)(-1 * (history[action_id]/100)));
                 history_del(history, action_id);
+
+                for (int i = 0; i < words_amt; i++) {
+                    get_n_word(enc_str, i+1, words[i]);
+                }
 
                 wait_accept();
                 break;
