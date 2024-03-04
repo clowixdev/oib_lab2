@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <stdbool.h>
 
 // -
 
@@ -8,18 +9,18 @@
 #define MINHISTSTEP 1
 #define ALPHLEN 33
 
-void display_int(int arr[]) {
-    for (int i = 0; i < 33; i++) {
+void display_int(int arr[], int len) {
+    for (int i = 0; i < len; i++) {
         printf("%d ", arr[i]);
     }
     printf("\n");
 }
 
-void display_str(char* arr) {
-    for (int i = 0; i < 33; i++) {
-        printf("%c ", arr[i]);
+void display_str(char* arr, int len) {
+    for (int i = 0; i < len; i++) {
+        printf("%c", arr[i]);
     }
-    printf("\n");
+    printf(" ");
 }
 
 void copy(int arr1[], int arr2[]) {
@@ -30,16 +31,20 @@ void copy(int arr1[], int arr2[]) {
 
 void clear(char* str, int strlen) {
     for (int i = 0; i < strlen; i++) {
-        str[i] = 0;
+        str[i] = '\0';
     }
 }
 
 void display_arr(int arr[], int sym_amt) {
     printf("Total amount of letters: %d\n", sym_amt);
     for (int i = 0; i < 32; i++) {
-        printf("%d) %c - %d - %.3f\n", i, 'À'+i, arr[i], (float)arr[i]/(sym_amt));
+        if (arr[i] != 0) {
+            printf("%d) %c - %d - %.3f\n", i, 'À'+i, arr[i], (float)arr[i]/(sym_amt));
+        }
     }
-    printf("32) ¨ - %d - %.3f", arr[32], (float)arr[32]/(sym_amt));
+    if (arr[32] != 0) {
+        printf("32) ¨ - %d - %.3f", arr[32], (float)arr[32]/(sym_amt));
+    }
 }
 
 void sort(int *arr, int size) {
@@ -110,72 +115,213 @@ void display_recomend(int freq_dict[], int alph_freq[], char* enc_str, int strle
 }
 
 int fill_dict(char* str, int freq_dict[]) {
-    int sym_amt = 0;
+    int symbols = 0;
     for (int i = 0; str[i] != '\0'; i++) {
-        if (str[i] == ' ') {
+        if (str[i] == ' ' || str[i] == '\n') {
             continue;
         } else {
             if (str[i] == '¨') {
                 freq_dict[ALPHLEN-1]++;
-                sym_amt++;
+                symbols++;
                 continue;
             } else {
                 freq_dict[str[i] + 64]++;
-                sym_amt++;
+                symbols++;
             }
         }
     }
 
-    return sym_amt;
+    return symbols;
+}
+
+void show_encoded_string(char *str) {
+    printf("Encrypted string: \n\n");
+    for (int i = 0; str[i] != '\0'; i++) {
+        printf("%c", str[i]);
+    }
+    printf("\n\n");
+}
+
+// ÊÙÐÍÑÉØÙÕÄÒ ÐÁÓÒÖÏÔÞÑÍÛ ØÉ ÜÉËÁ ÍÑÉÑÒÍÑÒÎÁÍÄÙÌÙ ÉØÉÆÒËÉ ÑÁÄÍÑÉ ØÙ ÑÙÆÅÄÙ ÁÍÆÒ ÙØ ÐÙÍÑÉÑÙÎØÙ ÐÆÒØØÈÃ
+int count_words(char* str) {
+    int count = 0;
+    for(int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == ' ') {
+            count++;
+        }
+    }
+    count++; //last word
+    return count;
+}
+
+int def_max_len(char* str) {
+    int curr_len = 0;
+    int max_len = 0;
+    for(int i = 0; str[i] != '\0'; i++) {
+        if (str[i] != ' ') {
+            curr_len++;
+        } else {
+            max_len = (curr_len > max_len) ? curr_len : max_len;
+            curr_len = 0;
+        }
+    }
+
+    return max_len;
+}
+
+void get_n_word(char* str, int n, char* word) {
+    int count_whitespace = 0;
+    int j = 0;
+    for(int i = 0; count_whitespace != n; i++) {
+        if (str[i] == ' ') {
+            count_whitespace++;
+            i++;
+        }
+        if (count_whitespace == n-1) {
+            word[j++] = str[i];
+        }
+    }
+    word[j] = '\0';
+}
+
+int upper_amt(char* str) {
+    int amt = 0;
+
+    for(int i = 0; str[i] != '\0'; i++) {
+        if (((str[i] >= -64 && str[i] <= -32) || str[i] == -88) && str[i] != ' ') {
+            amt++;
+        }
+    }
+
+    return amt;
+}
+
+void wait_accept() {
+    printf("\ntype anything to continue >>> ");
+    getchar();
+    fflush(stdin);
 }
 
 int main(void) {
     SetConsoleCP(1251);
-    SetConsoleOutputCP(1251); // alph À(64) > ÿ(-1)
+    SetConsoleOutputCP(1251); // alph À(-64) > ÿ(-1)
 
     int freq_dict[ALPHLEN] = { 0 }; // À Á Â ... = i+64 (¨ = -88 = i=32)
     int alph_freq[ALPHLEN] = {31,13,25,15,21,32,9,14,30,11,23,24,\
                             22,29,33,20,26,27,28,19,3,10,6,12,\
-                            8,5,2,17,16,4,7,18,1}; // alphabet letters frequency
+                            8,5,2,17,16,4,7,18,1}; // alphabet letters frequency ranking
     int* history = (int*)malloc(MINHISTSTEP * sizeof(int));
-    char enc_str[MAXSTRLEN] = { 0 };
+    // char enc_str[MAXSTRLEN] = { 0 };
 
-    FILE* input_file = fopen("input.txt", "r");
-    if (input_file == NULL) {
-        return 1;
-    }
-
-    fgets(enc_str, MAXSTRLEN, input_file);
+    // FILE* input_file = fopen("input.txt", "r");
+    // if (input_file == NULL) {
+    //     return 1;
+    // }
+    // fgets(enc_str, MAXSTRLEN, input_file);
+    char enc_str[MAXSTRLEN] = "Ïåðâûé ÂÒîðîé ÒÐÅòèé ×ÅÒÂåðòûé ÏßÒÛÉ ØÅÑÒÎÉ\0";
 
     int sym_amt = fill_dict(enc_str, freq_dict);
 
+    int words_amt = count_words(enc_str);
+    int max_word_len = def_max_len(enc_str) + 1;
+
+    char **words = (char**) malloc(words_amt * max_word_len * sizeof(char));
+    for (int i = 0; i < words_amt; i++) {
+        char *word = (char*) malloc(sizeof(char) * max_word_len);
+        clear(word, max_word_len);
+        get_n_word(enc_str, i+1, word);
+        words[i] = word;
+    }
+
     while (1) {
+        printf("\n");
+        show_encoded_string(enc_str);
+        printf("Please, choose 1 option:\n\
+        1. Frequency analysis\n\
+        2. Group words by letters amount\n\
+        3. Group words by uppercase letters left\n\
+        4. Change letters in encrypted string\n\
+        5. Revert action by id (show history)\n\
+        'e'. Enter 'e' to exit the programm\n\
+        >>> ");
         int user_option = getchar();
-        switch (user_option)
-        {
-        case '1':
-            //TODO freq analysis
-            display_arr(freq_dict, sym_amt);
-            printf("\n");
-            display_recomend(freq_dict, alph_freq, enc_str, strlen(enc_str));
-            break;
-        case '2':
-            //TODO words by letters_amt
-            break;
-        case '3':
-            //TODO words by uppercase letters
-            break;
-        case '4':
-            //TODO change letters 'À' - 'á'  
-            break;
-        case '5':
-            //TODO revert action by id
-            break;
-        case 'e':
-            printf("exit");
-            return 0;
-        default:
-            break;
+        fflush(stdin);
+        switch (user_option) {
+            case '1':
+                //TODO freq analysis
+                display_arr(freq_dict, sym_amt);
+                printf("\n");
+                display_recomend(freq_dict, alph_freq, enc_str, strlen(enc_str));
+
+                wait_accept();
+                break;
+            case '2':
+                //TODO words by letters_amt
+
+                bool is_printed_len = false;
+
+                printf("Words with len");
+                for (int i = max_word_len; i != 1; i--) {
+                    for (int j = 0; j != words_amt; j++) {
+                        if (strlen(words[j]) != i) {
+                            continue;
+                        } else {
+                            if (is_printed_len == false) {
+                                if (i != max_word_len) {
+                                    printf("\n");
+                                }
+                                printf("\t%d symbols: ", i);
+                                is_printed_len = true;
+                            }
+                            printf("%s ", words[j]);
+                        }
+                    }
+                    is_printed_len = false;
+                }
+                wait_accept();
+                break;
+            case '3':
+                //TODO words by uppercase letters
+
+                bool is_printed_upper = false;
+
+                for (int i = 0; i < words_amt; i++) {
+                    clear(words[i], max_word_len);
+                    get_n_word(enc_str, i+1, words[i]);
+                }
+
+                printf("Words with encoded letters:");
+                for (int i = max_word_len; i != 1; i--) {
+                    for (int j = 0; j < words_amt; j++) {
+                        if (upper_amt(words[j]) != i) {
+                            continue;
+                        } else {
+                            if (is_printed_upper == false) {
+                                if (i != max_word_len) {
+                                    printf("\n");
+                                }
+                                printf("\t%d symbols: ", i);
+                                is_printed_upper = true;
+                            }
+                            printf("%s ", words[j]);
+                        }
+                    }
+                    is_printed_upper = false;
+                }
+                wait_accept();
+                break;
+            case '4':
+                //TODO change letters 'A' - 'o'
+                break;
+            case '5':
+                //TODO revert action by id
+                break;
+            case 'e':
+                printf("Shutting down...");
+                return 0;
+            default:
+                printf("Error input detected!");
+                break;
         }
     }
 }
