@@ -8,6 +8,7 @@
 #define MAXSTRLEN 200
 #define HISTLEN 33
 #define ALPHLEN 33
+#define RECLEN 34
 
 void display_int(int arr[], int len) {
     for (int i = 0; i < len; i++) {
@@ -29,9 +30,15 @@ void copy(int arr1[], int arr2[]) {
     }
 }
 
-void clear(char* str, int strlen) {
+void clear_str(char* str, int strlen) {
     for (int i = 0; i < strlen; i++) {
         str[i] = '\0';
+    }
+}
+
+void clear_int(int arr[], int arrlen) {
+    for (int i = 0; i < arrlen; i++) {
+        arr[i] = 0;
     }
 }
 
@@ -87,18 +94,17 @@ int str_set(char* str, char* set, int str_len) {
     return lenres;
 }
 
-void display_recomend(int freq_dict[], int alph_freq[], char* enc_str, int strlen) {
-
-    printf("Recomended changes: ");
+void create_recomend(int rec_dict[], int freq_dict[], int alph_freq[], char* enc_str, int strlen) {
+    clear_int(rec_dict, RECLEN);
     int set_upper[ALPHLEN] = { 0 };
     int set_lower[ALPHLEN] = { 0 };
 
     for (int i = 0; enc_str[i] != '\0'; i++) {
-        if ((enc_str[i] >= -64 && enc_str[i] <= -32) && enc_str[i] != ' ') { //is_uppercase
+        if ((enc_str[i] >= -64 && enc_str[i] <= -33) && enc_str[i] != ' ') { //is_uppercase
             set_upper[enc_str[i] + 64]++;
         } else if (enc_str[i] == -88) { //is_upper_YO
             set_upper[32]++;
-        } else if ((enc_str[i] >= -31 && enc_str[i] <= -1) && enc_str[i] != ' ') { //is_lowercase
+        } else if ((enc_str[i] >= -32 && enc_str[i] <= -1) && enc_str[i] != ' ') { //is_lowercase
             set_lower[enc_str[i] + 32]++;
         } else if (enc_str[i] == -72) { //is_lower_yo
             set_lower[32]++;
@@ -132,9 +138,19 @@ void display_recomend(int freq_dict[], int alph_freq[], char* enc_str, int strle
         }
     }
 
+    for (int i = 0; i < encrypted_amt; i++) {
+        int action = 0;
+        int enc_code = -1 * (int)('ю'+max_n(arr_sorted, arr_ind, i+1));
+        int dec_code = -1 * (int)('Ю'+max_n(alph_arr_sorted, alph_arr_ind, i+1));
+        action = enc_code * 100 + dec_code;
+        rec_dict[i] = action;
+    }
+}
+
+void display_recomend(int rec_dict[]) {
     printf("Recomended changes: \n");
-    for (int i = 1; i < encrypted_amt; i++) {
-        printf("%c - %c\n", 'ю'+max_n(arr_sorted, arr_ind, i), 'Ю'+max_n(alph_arr_sorted, alph_arr_ind, i));
+    for (int i = 0; rec_dict[i] != 0; i++) {
+        printf("%c - %c\n", (-1 * (rec_dict[i]/100)), (-1 * (rec_dict[i]%100)));
     }
 }
 
@@ -212,7 +228,7 @@ int upper_amt(char* str) {
     int amt = 0;
 
     for(int i = 0; str[i] != '\0'; i++) {
-        if (((str[i] >= -64 && str[i] <= -32) || str[i] == -88) && str[i] != ' ') {
+        if (((str[i] >= -64 && str[i] <= -33) || str[i] == -88) && str[i] != ' ') {
             amt++;
         }
     }
@@ -266,9 +282,21 @@ void history_del(int history[], int action_id) {
 }
 
 void wait_accept() {
-    printf("\ntype anything to continue >>> ");
+    printf("\nPress enter to continue. ");
     getchar();
     fflush(stdin);
+}
+
+void make_all_changes(char* enc_str, int rec_dict[], int history[]) {
+    for (int i = 0; rec_dict[i] != 0; i++) {
+
+        char enc_letter = (char)(-1 * (rec_dict[i]/100));
+        char dec_letter = (char)(-1 * (rec_dict[i]%100));
+
+        change_letter(enc_str, enc_letter, dec_letter);
+        history_add(history, enc_letter, dec_letter);
+    }
+    printf("All letters were changed!");
 }
 
 int main(void) {
@@ -280,14 +308,15 @@ int main(void) {
                             22,29,33,20,26,27,28,19,3,10,6,12,\
                             8,5,2,17,16,4,7,18,1}; // alphabet letters frequency ranking
     int history[HISTLEN] = { 0 };
-    // char enc_str[MAXSTRLEN] = { 0 };
+    char enc_str[MAXSTRLEN] = { 0 };
+    int rec_dict[RECLEN] = { 0 };
 
-    // FILE* input_file = fopen("input.txt", "r");
-    // if (input_file == NULL) {
-    //     return 1;
-    // }
-    // fgets(enc_str, MAXSTRLEN, input_file);
-    char enc_str[MAXSTRLEN] = "оепбши брнпни рперхи вербепрши оърши ьеярни\0";
+    FILE* input_file = fopen("input.txt", "r");
+    if (input_file == NULL) {
+        return 1;
+    }
+    fgets(enc_str, MAXSTRLEN, input_file);
+    // char enc_str[MAXSTRLEN] = "оепбши брнпни рперхи вербепрши оърши ьеярни\0";
 
     int sym_amt = fill_dict(enc_str, freq_dict);
 
@@ -297,7 +326,7 @@ int main(void) {
     char **words = (char**) malloc(words_amt * max_word_len * sizeof(char));
     for (int i = 0; i < words_amt; i++) {
         char *word = (char*) malloc(sizeof(char) * max_word_len);
-        clear(word, max_word_len);
+        clear_str(word, max_word_len);
         get_n_word(enc_str, i+1, word);
         words[i] = word;
     }
@@ -327,7 +356,21 @@ int main(void) {
                         display_arr(freq_dict, sym_amt);
                         break;
                     case '2':
-                        display_recomend(freq_dict, alph_freq, enc_str, strlen(enc_str));
+                        create_recomend(rec_dict, freq_dict, alph_freq, enc_str, strlen(enc_str));
+                        display_recomend(rec_dict);
+                        
+                        printf("Do you want to change everything as recommended? (y/n) >>> ");
+                        char change_everything = getchar();
+                        fflush(stdin);
+                        if (change_everything == 'y') {
+                            make_all_changes(enc_str, rec_dict, history);
+                            for (int i = 0; i < words_amt; i++) {
+                                get_n_word(enc_str, i+1, words[i]);
+                            }
+                        } else {
+                            printf("OK ~(-_-)~\n");
+                        }
+                        
                         break;
                     default:
                         printf("Incorrect option");
