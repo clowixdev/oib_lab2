@@ -26,9 +26,10 @@ This programm has 5 released functions:
 
         Program will change all the uppercase letters in the current cryptogram by the ones you type
    
-### ACCEPTED!
 5. Revert action by id (show history)
 
         You can see all the action, that you did by calling this function, and revert them if you need
         
 You can exit the program by entering "e"
+
+### ACCEPTED!
